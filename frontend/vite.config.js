@@ -6,6 +6,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+
+    // Local: /
+    // GitHub Pages: /holakids/
+    base: mode === 'production' ? '/holakids/' : '/',
+
     server: {
       host: '0.0.0.0',
       port: 5173,
@@ -18,4 +23,3 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
-
