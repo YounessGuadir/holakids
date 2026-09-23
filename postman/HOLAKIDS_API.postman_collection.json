@@ -1,0 +1,158 @@
+{
+  "info": {
+    "_postman_id": "fc67c106-0617-4b4f-99e6-holakids-api",
+    "name": "HOLAKIDS API — Spring Boot + SQL Server",
+    "description": "Tests complets du catalogue, de JWT et des rôles ADMIN/CLIENT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Santé",
+      "item": [
+        {
+          "name": "Health check",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('API disponible', () => pm.response.to.have.status(200));", "pm.test('Statut UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"], "type": "text/javascript" } }]
+        }
+      ]
+    },
+    {
+      "name": "Authentification",
+      "item": [
+        {
+          "name": "Register CLIENT",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.environment.set('registerEmail', `client.${Date.now()}@holakids.ma`);"], "type": "text/javascript" } },
+            { "listen": "test", "script": { "exec": ["pm.test('CLIENT créé', () => pm.response.to.have.status(201));", "const json = pm.response.json();", "pm.expect(json.user.role).to.eql('CLIENT');"], "type": "text/javascript" } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Client Postman\",\n  \"email\": \"{{registerEmail}}\",\n  \"password\": \"Postman@12345\"\n}" },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login CLIENT",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Connexion CLIENT OK', () => pm.response.to.have.status(200));", "const json = pm.response.json();", "pm.expect(json.user.role).to.eql('CLIENT');", "pm.environment.set('clientToken', json.accessToken);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{clientEmail}}\",\n  \"password\": \"{{clientPassword}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login ADMIN",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Connexion ADMIN OK', () => pm.response.to.have.status(200));", "const json = pm.response.json();", "pm.expect(json.user.role).to.eql('ADMIN');", "pm.environment.set('adminToken', json.accessToken);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalogue public",
+      "item": [
+        {
+          "name": "GET products paginés",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Catalogue OK', () => pm.response.to.have.status(200));", "const json = pm.response.json();", "pm.expect(json.content).to.be.an('array');", "pm.expect(json.totalElements).to.be.above(400);", "if (json.content.length) { pm.environment.set('productId', json.content[0].id); pm.environment.set('productSlug', json.content[0].slug); }"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products?page=0&size=24&sort=featured" }
+        },
+        {
+          "name": "GET categories",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Catégories disponibles', () => pm.response.to.have.status(200));", "const json = pm.response.json();", "pm.expect(json).to.be.an('array').that.is.not.empty;", "pm.environment.set('categoryId', json[0].id);"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/categories" }
+        },
+        {
+          "name": "GET product par slug",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Produit trouvé', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().images).to.be.an('array');"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/{{productSlug}}" }
+        },
+        {
+          "name": "Search product",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Recherche OK', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().content).to.be.an('array');"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/search?q=vélo&page=0&size=12" }
+        },
+        {
+          "name": "Filter category",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Filtre catégorie OK', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/category/{{categoryId}}?page=0&size=12" }
+        },
+        {
+          "name": "Promotions",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Promotions OK', () => pm.response.to.have.status(200));", "pm.response.json().content.forEach(p => pm.expect(p.promotion).to.eql(true));"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/promotions?page=0&size=12" }
+        },
+        {
+          "name": "Featured",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Sélection mise en avant OK', () => pm.response.to.have.status(200));"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/featured?limit=8" }
+        }
+      ]
+    },
+    {
+      "name": "Administration",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "POST product ADMIN",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Produit créé', () => pm.response.to.have.status(201));", "const json = pm.response.json();", "pm.environment.set('createdProductId', json.id);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"slug\": \"postman-robot-educatif\",\n  \"sku\": \"POSTMAN-ROBOT-001\",\n  \"externalId\": \"POSTMAN-EXT-001\",\n  \"nameFr\": \"Robot éducatif Postman\",\n  \"nameAr\": \"روبوت تعليمي بوستمان\",\n  \"shortNameFr\": \"Robot éducatif\",\n  \"shortNameAr\": \"روبوت تعليمي\",\n  \"descriptionFr\": \"Produit créé par la collection Postman.\",\n  \"descriptionAr\": \"منتج تم إنشاؤه عبر بوستمان.\",\n  \"brand\": \"HOLAKIDS Test\",\n  \"subCategoryFr\": \"Robotique\",\n  \"subCategoryAr\": \"روبوتيك\",\n  \"ageRange\": \"6-8\",\n  \"ageMin\": 6,\n  \"ageMax\": 8,\n  \"genderTarget\": \"UNISEX\",\n  \"rating\": 4.5,\n  \"reviewCount\": 12,\n  \"price\": 299,\n  \"oldPrice\": 349,\n  \"stock\": 8,\n  \"promotion\": true,\n  \"newProduct\": true,\n  \"featured\": false,\n  \"active\": true,\n  \"primaryImageUrl\": \"/images/products/science-kit.png\",\n  \"categoryId\": {{categoryId}},\n  \"images\": [{\"url\": \"/images/products/science-kit.png\", \"altFr\": \"Robot éducatif\", \"altAr\": \"روبوت تعليمي\"}],\n  \"features\": [{\"textFr\": \"Jeu éducatif\", \"textAr\": \"لعبة تعليمية\"}],\n  \"attributes\": [{\"name\": \"material\", \"valueFr\": \"Plastique adapté\", \"valueAr\": \"بلاستيك مناسب\"}]\n}" },
+            "url": "{{baseUrl}}/admin/products"
+          }
+        },
+        {
+          "name": "PUT product ADMIN",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Produit modifié', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().price).to.eql(319);"], "type": "text/javascript" } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"slug\": \"postman-robot-educatif\",\n  \"sku\": \"POSTMAN-ROBOT-001\",\n  \"externalId\": \"POSTMAN-EXT-001\",\n  \"nameFr\": \"Robot éducatif Postman Plus\",\n  \"nameAr\": \"روبوت تعليمي بوستمان بلس\",\n  \"shortNameFr\": \"Robot Postman Plus\",\n  \"shortNameAr\": \"روبوت بوستمان بلس\",\n  \"descriptionFr\": \"Produit modifié par Postman.\",\n  \"descriptionAr\": \"منتج تم تعديله عبر بوستمان.\",\n  \"brand\": \"HOLAKIDS Test\",\n  \"ageRange\": \"6-8\",\n  \"price\": 319,\n  \"oldPrice\": 369,\n  \"stock\": 10,\n  \"promotion\": true,\n  \"newProduct\": true,\n  \"featured\": true,\n  \"active\": true,\n  \"primaryImageUrl\": \"/images/products/science-kit.png\",\n  \"categoryId\": {{categoryId}},\n  \"images\": [{\"url\": \"/images/products/science-kit.png\", \"altFr\": \"Robot\", \"altAr\": \"روبوت\"}],\n  \"features\": [],\n  \"attributes\": []\n}" },
+            "url": "{{baseUrl}}/admin/products/{{createdProductId}}"
+          }
+        },
+        {
+          "name": "PATCH stock",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Stock modifié', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().stock).to.eql(25);"], "type": "text/javascript" } }],
+          "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"stock\": 25}" }, "url": "{{baseUrl}}/admin/products/{{createdProductId}}/stock" }
+        },
+        {
+          "name": "PATCH price",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Prix modifié', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().price).to.eql(279);"], "type": "text/javascript" } }],
+          "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"price\": 279, \"oldPrice\": 329, \"promotion\": true}" }, "url": "{{baseUrl}}/admin/products/{{createdProductId}}/price" }
+        },
+        {
+          "name": "PATCH availability",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Disponibilité modifiée', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().active).to.eql(false);"], "type": "text/javascript" } }],
+          "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"active\": false}" }, "url": "{{baseUrl}}/admin/products/{{createdProductId}}/availability" }
+        },
+        {
+          "name": "DELETE product",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Produit supprimé', () => pm.response.to.have.status(204));"], "type": "text/javascript" } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/admin/products/{{createdProductId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Sécurité",
+      "item": [
+        {
+          "name": "CLIENT interdit sur ADMIN — 403",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Accès refusé au CLIENT', () => pm.response.to.have.status(403));"], "type": "text/javascript" } }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{clientToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/products?page=0&size=10"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: HOLAKIDS
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      connection-timeout: 5000
+      validation-timeout: 3000
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+        default_batch_fetch_size: 50
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+server:
+  port: 8080
+  shutdown: graceful
+
+application:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  jwt:
+    secret: ${JWT_SECRET:HOLAKIDS-development-secret-key-change-before-production-2026}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  uploads:
+    directory: ${UPLOAD_DIRECTORY:/app/uploads}
+  seed:
+    enabled: ${SEED_ENABLED:true}
+    dataset: ${DATASET_PATH:datasets/products.json}
+    admin-email: ${ADMIN_EMAIL:AbdelatifMada@gmail.com}
+    admin-password: ${ADMIN_PASSWORD:Admin@12345}
+    client-email: ${CLIENT_EMAIL:client@holakids.ma}
+    client-password: ${CLIENT_PASSWORD:Client@12345}
+
+springdoc:
+  packages-to-scan: ma.holakids
+  paths-to-match: /api/**
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs

@@ -1,0 +1,99 @@
+name: holakids
+
+services:
+  holakids-sqlserver:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    image: holakids-sqlserver:2022
+    container_name: holakids-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-holakids}
+    ports:
+      - "${SQLSERVER_PORT:-1433}:1433"
+    volumes:
+      - holakids-sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -d \"$$DB_NAME\" -Q \"SELECT 1\" > /dev/null 2>&1 || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 35s
+    networks:
+      - holakids-network
+
+  holakids-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: holakids-backend
+    restart: unless-stopped
+    environment:
+      DB_URL: "jdbc:sqlserver://holakids-sqlserver:1433;databaseName=${DB_NAME:-holakids};encrypt=true;trustServerCertificate=true"
+      DB_USERNAME: ${DB_USERNAME:-sa}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:-HOLAKIDS-local-JWT-secret-change-in-production-2026}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      UPLOAD_DIRECTORY: /app/uploads
+      SEED_ENABLED: ${SEED_ENABLED:-true}
+      DATASET_PATH: ${DATASET_PATH:-datasets/products.json}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@holakids.ma}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@12345}
+      CLIENT_EMAIL: ${CLIENT_EMAIL:-client@holakids.ma}
+      CLIENT_PASSWORD: ${CLIENT_PASSWORD:-Client@12345}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      holakids-sqlserver:
+        condition: service_healthy
+    volumes:
+      - holakids-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/health > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    networks:
+      - holakids-network
+
+  holakids-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api/v1}
+    container_name: holakids-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      holakids-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - holakids-network
+
+volumes:
+  holakids-sqlserver-data:
+    name: holakids-sqlserver-data
+  holakids-uploads:
+    name: holakids-uploads
+
+networks:
+  holakids-network:
+    name: holakids-network
+    driver: bridge
