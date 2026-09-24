@@ -1,0 +1,7 @@
+.gcloudignore
+.git
+.gitignore
+.idea
+target
+src/test
+*.log

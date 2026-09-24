@@ -1,8 +1,11 @@
 import axios from 'axios'
 
+const configuredApiUrl = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/+$/, '')
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  timeout: 15000,
+  baseURL: configuredApiUrl,
+  // Une instance Cloud Run à zéro peut avoir besoin de quelques secondes pour redémarrer.
+  timeout: 90000,
 })
 
 apiClient.interceptors.request.use((config) => {

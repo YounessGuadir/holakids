@@ -8,7 +8,7 @@ const stateContent = {
   },
   connected: {
     label: 'Backend connecté.',
-    detail: 'Spring Boot communique correctement avec SQL Server.',
+    detail: 'Spring Boot communique correctement avec PostgreSQL.',
   },
   unavailable: {
     label: 'Backend indisponible.',
@@ -72,7 +72,7 @@ function ConnectionStatus() {
         </span>
         <span className="architecture-arrow" aria-hidden="true">→</span>
         <span className={`architecture-node ${isConnected ? 'active' : ''}`}>
-          SQL Server
+          PostgreSQL
         </span>
       </div>
 
@@ -90,4 +90,3 @@ function ConnectionStatus() {
 }
 
 export default ConnectionStatus
-

@@ -1,8 +1,8 @@
 # HOLAKIDS — E-commerce de jouets
 
-Application full-stack bilingue **Français / Arabe** pour un magasin familial de jouets : React, Spring Boot, SQL Server, JWT et Docker Compose.
+Application full-stack bilingue **Français / Arabe** pour un magasin familial de jouets : React, Spring Boot, PostgreSQL, JWT et Docker Compose.
 
-Le design actuel est conservé. Le catalogue n'est plus défini dans React : **460 produits** sont importés depuis `backend/src/main/resources/datasets/products.json`, enregistrés dans SQL Server puis servis par l'API REST.
+Le design actuel est conservé. Le catalogue n'est plus défini dans React : **460 produits** sont importés depuis `backend/src/main/resources/datasets/products.json`, enregistrés dans PostgreSQL puis servis par l'API REST.
 
 ## Fonctionnalités
 
@@ -33,7 +33,7 @@ Le design actuel est conservé. Le catalogue n'est plus défini dans React : **4
 - prix, promotions, stock, activation/désactivation ;
 - galerie multi-images et téléversement JPG/PNG/WEBP ;
 - CRUD catégories ;
-- changements persistés dans SQL Server.
+- changements persistés dans PostgreSQL.
 
 ### Import dataset
 
@@ -41,7 +41,7 @@ Pipeline :
 
 ```text
 products.json → DatasetImportService → validation/nettoyage
-              → ProductImportService → SQL Server → API REST → React
+              → ProductImportService → PostgreSQL → API REST → React
 ```
 
 L'import est idempotent : `sku`, `slug` et `externalId` empêchent les doublons. Les produits déjà présents ne sont pas écrasés, donc les prix et stocks modifiés par l'administrateur restent permanents.
@@ -50,7 +50,7 @@ La taxonomie des catégories s'inspire de la **Shopify Standard Product Taxonomy
 
 ## Lancement complet avec Docker
 
-Prérequis : Docker Desktop avec Docker Compose, ports `3000`, `8080` et `1433` disponibles.
+Prérequis : Docker Desktop avec Docker Compose, ports `3000`, `8080` et `5432` disponibles.
 
 Pour obtenir exactement le nouveau dataset de 460 produits, supprimer l'ancien volume de démonstration une fois :
 
@@ -71,13 +71,13 @@ Aux prochains lancements :
 docker compose up --build
 ```
 
-Les volumes `holakids-sqlserver-data` et `holakids-uploads` conservent la base et les images téléversées.
+Les volumes `holakids-postgres-data` et `holakids-uploads` conservent la base et les images téléversées.
 
 ## Comptes de test
 
 | Rôle | E-mail | Mot de passe |
 |---|---|---|
-| ADMIN | `admin@holakids.ma` | `Admin@12345` |
+| ADMIN | `AbdelatifMada@gmail.com` | défini par `ADMIN_PASSWORD` |
 | CLIENT | `client@holakids.ma` | `Client@12345` |
 
 Ces identifiants sont réservés au développement local. Modifiez-les dans `.env` avant un déploiement réel.
@@ -101,15 +101,15 @@ npm run dev
 
 Le proxy Vite envoie `/api` vers `http://localhost:8080`.
 
-Pour le backend hors Docker, SQL Server doit déjà fonctionner et les variables `DB_URL`, `DB_USERNAME` et `DB_PASSWORD` doivent être définies dans le terminal. Le fichier `.env` est lu automatiquement par Docker Compose, pas par la commande Maven seule.
+Pour le backend hors Docker, PostgreSQL doit déjà fonctionner et les variables `DB_URL`, `DB_USERNAME` et `DB_PASSWORD` doivent être définies dans le terminal. Le fichier `.env` est lu automatiquement par Docker Compose, pas par la commande Maven seule.
 
 ## Dépannage Docker Desktop
 
-Si une ancienne version affichait `entrypoint.sh: Is a directory`, le montage fautif n'existe plus dans ce projet. Depuis le dossier racine, reconstruire les conteneurs avec :
+Depuis le dossier racine, reconstruire PostgreSQL et l'API avec :
 
 ```bash
 docker compose down -v --remove-orphans
-docker compose build --no-cache holakids-sqlserver
+docker compose pull holakids-postgres
 docker compose up --build --force-recreate
 ```
 
@@ -128,7 +128,7 @@ Tests manuels : importer les deux fichiers du dossier `postman/`. L'ordre consei
 ## Documentation
 
 - diagramme de classes : `docs/class-diagram.md` ;
-- schéma SQL Server : `docs/database-schema.md` ;
+- schéma PostgreSQL : `docs/database-schema.md` ;
 - endpoints : `docs/api-endpoints.md` ;
 - compte exact par catégorie : `docs/catalog-report.md` ;
 - tests Postman : `docs/postman-guide.md` ;
@@ -162,3 +162,9 @@ node tools/generate-catalog-dataset.mjs
 ```
 
 Le script vérifie automatiquement que le résultat contient exactement 460 produits.
+
+## Déploiement gratuit
+
+Le guide prêt pour **Google Cloud Run + Supabase PostgreSQL + GitHub Pages** est
+dans `deploy/google-cloud/README.md`. Les mots de passe restent dans les
+variables Cloud Run et ne doivent jamais être publiés dans GitHub.

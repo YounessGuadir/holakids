@@ -1,4 +1,4 @@
-# Schéma SQL Server
+# Schéma PostgreSQL
 
 ```mermaid
 erDiagram
@@ -8,19 +8,19 @@ erDiagram
     varchar email UK
     varchar password
     varchar role
-    bit enabled
-    datetime2 created_at
-    datetime2 updated_at
+    boolean enabled
+    timestamptz created_at
+    timestamptz updated_at
   }
 
   CATEGORIES {
     bigint id PK
     varchar slug UK
     varchar name_fr
-    nvarchar name_ar
+    varchar name_ar
     varchar image_url
     int display_order
-    bit active
+    boolean active
   }
 
   PRODUCTS {
@@ -30,13 +30,13 @@ erDiagram
     varchar slug UK
     bigint category_id FK
     varchar name_fr
-    nvarchar name_ar
+    varchar name_ar
     decimal price
     decimal old_price
     int stock
     decimal rating
     int review_count
-    bit active
+    boolean active
   }
 
   PRODUCT_IMAGES {
@@ -44,7 +44,7 @@ erDiagram
     bigint product_id FK
     varchar url
     varchar alt_fr
-    nvarchar alt_ar
+    varchar alt_ar
     int position
   }
 
@@ -52,7 +52,7 @@ erDiagram
     bigint id PK
     bigint product_id FK
     varchar text_fr
-    nvarchar text_ar
+    varchar text_ar
     int position
   }
 
@@ -61,7 +61,7 @@ erDiagram
     bigint product_id FK
     varchar name
     varchar value_fr
-    nvarchar value_ar
+    varchar value_ar
     int position
   }
 

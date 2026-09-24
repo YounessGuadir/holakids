@@ -1,32 +1,24 @@
 name: holakids
 
 services:
-  holakids-sqlserver:
-    build:
-      context: ./database
-      dockerfile: Dockerfile
-    image: holakids-sqlserver:2022
-    container_name: holakids-sqlserver
+  holakids-postgres:
+    image: postgres:16-alpine
+    container_name: holakids-postgres
     restart: unless-stopped
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: Developer
-      MSSQL_SA_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME:-holakids}
+      POSTGRES_DB: ${DB_NAME:-holakids}
+      POSTGRES_USER: ${DB_USERNAME:-holakids}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-holakids_local_password}
     ports:
-      - "${SQLSERVER_PORT:-1433}:1433"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - holakids-sqlserver-data:/var/opt/mssql
+      - holakids-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -d \"$$DB_NAME\" -Q \"SELECT 1\" > /dev/null 2>&1 || exit 1"
-        ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
-      retries: 15
-      start_period: 35s
+      retries: 12
+      start_period: 15s
     networks:
       - holakids-network
 
@@ -37,23 +29,27 @@ services:
     container_name: holakids-backend
     restart: unless-stopped
     environment:
-      DB_URL: "jdbc:sqlserver://holakids-sqlserver:1433;databaseName=${DB_NAME:-holakids};encrypt=true;trustServerCertificate=true"
-      DB_USERNAME: ${DB_USERNAME:-sa}
-      DB_PASSWORD: ${DB_PASSWORD}
+      PORT: 8080
+      DB_URL: "jdbc:postgresql://holakids-postgres:5432/${DB_NAME:-holakids}"
+      DB_USERNAME: ${DB_USERNAME:-holakids}
+      DB_PASSWORD: ${DB_PASSWORD:-holakids_local_password}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-5}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-0}
+      DDL_AUTO: ${DDL_AUTO:-update}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
       JWT_SECRET: ${JWT_SECRET:-HOLAKIDS-local-JWT-secret-change-in-production-2026}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       UPLOAD_DIRECTORY: /app/uploads
       SEED_ENABLED: ${SEED_ENABLED:-true}
       DATASET_PATH: ${DATASET_PATH:-datasets/products.json}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@holakids.ma}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@12345}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-AbdelatifMada@gmail.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ChangeMeBeforeProduction123!}
       CLIENT_EMAIL: ${CLIENT_EMAIL:-client@holakids.ma}
       CLIENT_PASSWORD: ${CLIENT_PASSWORD:-Client@12345}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
-      holakids-sqlserver:
+      holakids-postgres:
         condition: service_healthy
     volumes:
       - holakids-uploads:/app/uploads
@@ -61,8 +57,8 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/health > /dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 25s
+      retries: 12
+      start_period: 35s
     networks:
       - holakids-network
 
@@ -88,8 +84,8 @@ services:
       - holakids-network
 
 volumes:
-  holakids-sqlserver-data:
-    name: holakids-sqlserver-data
+  holakids-postgres-data:
+    name: holakids-postgres-data
   holakids-uploads:
     name: holakids-uploads
 

@@ -27,7 +27,6 @@ public class Product extends BaseEntity {
     private String sku;
 
     // Optional value: uniqueness is enforced for non-empty values by the service/importer.
-    // A nullable UNIQUE constraint on SQL Server would allow only one NULL row.
     @Column(length = 100)
     private String externalId;
 

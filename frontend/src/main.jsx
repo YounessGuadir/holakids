@@ -7,9 +7,11 @@ import { CatalogProvider } from './context/CatalogContext'
 import { LocaleProvider } from './context/LocaleContext'
 import './styles/index.css'
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <LocaleProvider>
         <AuthProvider>
           <CatalogProvider>

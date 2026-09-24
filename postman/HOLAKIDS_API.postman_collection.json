@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "fc67c106-0617-4b4f-99e6-holakids-api",
-    "name": "HOLAKIDS API — Spring Boot + SQL Server",
+    "name": "HOLAKIDS API — Spring Boot + PostgreSQL",
     "description": "Tests complets du catalogue, de JWT et des rôles ADMIN/CLIENT.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

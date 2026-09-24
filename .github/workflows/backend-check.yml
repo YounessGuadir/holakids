@@ -1,0 +1,37 @@
+name: Check HOLAKIDS Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-check.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run backend tests
+        run: mvn -B test
+
+      - name: Build Cloud Run JAR
+        run: mvn -B clean package -Dmaven.test.skip=true

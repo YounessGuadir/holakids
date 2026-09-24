@@ -20,7 +20,7 @@ public class HealthController {
     }
 
     @GetMapping
-    @Operation(summary = "Vérifie la connexion entre l'API et SQL Server")
+    @Operation(summary = "Vérifie la connexion entre l'API et PostgreSQL")
     public ResponseEntity<HealthResponse> health() {
         if (healthService.isDatabaseConnected()) {
             return ResponseEntity.ok(new HealthResponse("UP", APPLICATION_NAME));

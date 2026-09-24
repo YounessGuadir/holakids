@@ -215,7 +215,7 @@ function AdminPage() {
   return (
     <div className="admin-page site-container">
       <div className="admin-heading">
-        <div><p className="section-eyebrow">HOLAKIDS Admin</p><h1>{t('adminDashboard')}</h1><p>Spring Boot API · SQL Server · JWT · {products.length} {t('products')}</p></div>
+        <div><p className="section-eyebrow">HOLAKIDS Admin</p><h1>{t('adminDashboard')}</h1><p>Spring Boot API · PostgreSQL · JWT · {products.length} {t('products')}</p></div>
         <div className="admin-heading-actions"><button className="button button-light" onClick={openCreateCategory}><FolderCog size={19} />{t('manageCategories')}</button><button className="button button-primary" onClick={openCreate}><Plus size={19} />{t('addProduct')}</button></div>
       </div>
       <div className="admin-stats"><article><Boxes /><span>{t('products')}</span><strong>{stats.total}</strong></article><article><PackageCheck /><span>{t('availableShort')}</span><strong>{stats.available}</strong></article><article><X /><span>{t('outOfStockShort')}</span><strong>{stats.unavailable}</strong></article></div>

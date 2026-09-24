@@ -1,15 +1,6 @@
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  timeout: 6000,
-  headers: {
-    Accept: 'application/json',
-  },
-})
+import { apiClient } from './client'
 
 export async function getHealth(signal) {
-  const response = await api.get('/health', { signal })
+  const response = await apiClient.get('/health', { signal })
   return response.data
 }
-
